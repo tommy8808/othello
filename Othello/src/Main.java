@@ -34,59 +34,67 @@ public class Main {
 		//System.out.println(arItems[0]);
 		
 		init(plateSize);
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		display();
+		systemWaitForReality();
 		play();
 	}
+
+	
 	
 	//게임 초기화
 	public static void init(int plateSize){
 		System.out.println("-----게임을 초기화 합니다.-----");
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		systemWaitForReality();
 		for(int i=0; i<plateSize; i++){
 			for(int j=0; j<plateSize; j++){
-				if((i == plateSize/2-1 && j == plateSize/2-1) || (i == plateSize/2 && j == plateSize/2)){
-					plate[i][j] = new Pos("black", j, i, plateSize);
-				}else if((i == plateSize/2-1 && j == plateSize/2) || (i == plateSize/2 && j == plateSize/2-1)){
-					plate[i][j] = new Pos("white", j, i, plateSize);
-				}else{
-					plate[i][j] = new Pos("none", j, i, plateSize);
-				}
+				initStone(plateSize, i, j);
 			}
 		}
 		whiteStone = 2;
 		blackStone = 2;
-		display();
 	}
+
+	private static void initStone(int plateSize, int i, int j) {
+		if(isBlackInitPlace(plateSize, i, j)){
+			plate[i][j] = new Pos("black", j, i, plateSize);
+		}else if(isWhiteInitplace(plateSize, i, j)){
+			plate[i][j] = new Pos("white", j, i, plateSize);
+		}else{
+			plate[i][j] = new Pos("none", j, i, plateSize);
+		}
+	}
+
+	private static boolean isWhiteInitplace(int plateSize, int i, int j) {
+		return (i == (plateSize/2)-1 && j == plateSize/2) || (i == plateSize/2 && j == (plateSize/2)-1);
+	}
+
+	private static boolean isBlackInitPlace(int plateSize, int i, int j) {
+		return (i == (plateSize/2)-1 && j == (plateSize/2)-1) || (i == plateSize/2 && j == plateSize/2);
+	}
+	
 	//현재 게임상황 display
 	public static void display(){
-		StringBuffer sb = new StringBuffer();
+		StringBuffer displayer = new StringBuffer();
 		for(int i=0; i<plateSize; i++){
-			sb.append("　　　　");
+			displayer.append("　　　　");
 			for(int j=0; j<plateSize; j++){
-				
-				if(plate[i][j].getColor().equals("black")){
-					sb.append("●  ");
-				}else if(plate[i][j].getColor().equals("white")){
-					sb.append("○  ");
-				}else if(plate[i][j].getChoosable() == true){
-					sb.append("¤  ");
-				}else {
-					sb.append("□  ");
-				}
+				showStoneStatusAndFindPointOfPossiblePoint(displayer, i, j);
 			}
-			sb.append("\n");
+			displayer.append("\n");
 		}
-		System.out.println(sb.toString());
-		
-		
+		System.out.println(displayer.toString());
+	}
+
+	private static void showStoneStatusAndFindPointOfPossiblePoint(StringBuffer displayer, int i, int j) {
+		if(plate[i][j].getColor().equals("black")){
+			displayer.append("●  ");
+		}else if(plate[i][j].getColor().equals("white")){
+			displayer.append("○  ");
+		}else if(plate[i][j].getChoosable() == true){
+			displayer.append("¤  ");
+		}else {
+			displayer.append("□  ");
+		}
 	}
 
 	public static void play(){
@@ -98,27 +106,27 @@ public class Main {
 			myTurn = true;
 			System.out.printf("선택 가능 좌표 :  ");
 			
-			List<Pos> possibleChoices = findChoices(myTurn);
-			if(possibleChoices.size()>0){
-				for(int i=0; i<possibleChoices.size(); i++){
-					System.out.printf("[" + possibleChoices.get(i).getX()+"," + possibleChoices.get(i).getY() + "] ");
-				}
+			List<Pos> myPossibleChoices = findChoices(myTurn);
+			if(isChoosable(myPossibleChoices)){
+				displayChoosablePoints(myPossibleChoices);
 				System.out.println();
 				display();
 				
 				System.out.printf("돌을 놓을 좌표를 선택하세요. (입력형식:x,y) :");
-				String[] arItems = scan.nextLine().split(",");
-				if(arItems.length != 2){
+				String[] userSelectedXandY = scan.nextLine().split(",");
+				if(isUserSelectedUnCorrectly(userSelectedXandY)){
 					System.out.println();
 					System.out.println("------입력 에러!!!------");
 					System.out.println("좌표를 정확히 입력해 주세요ex) 3,1");
 					System.out.println();
 					continue;
 				}
-				plate[Integer.parseInt(arItems[1])][Integer.parseInt(arItems[0])].setColor("black");
+				String userSelectedY = userSelectedXandY[1];
+				String userSelectedX = userSelectedXandY[0];
+				plate[Integer.parseInt(userSelectedY)][Integer.parseInt(userSelectedX)].setColor("black");
 				blackStone++;
-				System.out.println(arItems[0]+ ","+arItems[1]+" 을 선택하셨습니다.");
-				changeStone(Integer.parseInt(arItems[0]), Integer.parseInt(arItems[1]), (myTurn == true ? "black":"white"));
+				System.out.println(userSelectedX+ ","+userSelectedY+" 을 선택하셨습니다.");
+				changeStone(Integer.parseInt(userSelectedX), Integer.parseInt(userSelectedY), (myTurn == true ? "black":"white"));
 				display();
 				currentCount++;
 				blackOutCount = 0;
@@ -130,15 +138,15 @@ public class Main {
 			System.out.println("---------상대턴---------");
 			myTurn = false;
 			List<Pos> enemyChoices = findChoices(myTurn);//white 도 찾을 수 있도록 파라미터 변경
-			if(enemyChoices.size() > 0){
+			if(isChoosable(enemyChoices)){
 				Random ran = new Random();
-				
 				int randInt = ran.nextInt(enemyChoices.size()); 
-				
-				plate[enemyChoices.get(randInt).getY()][enemyChoices.get(randInt).getX()].setColor("white");
+				int enemySelectedY = enemyChoices.get(randInt).getY();
+				int enemySelectedX = enemyChoices.get(randInt).getX();
+				plate[enemySelectedY][enemySelectedX].setColor("white");
 				whiteStone++;
-				System.out.println("상대가 " + enemyChoices.get(randInt).getX()+ ","+enemyChoices.get(randInt).getY()+" 을 선택하였습니다.");
-				changeStone(enemyChoices.get(randInt).getX(), enemyChoices.get(randInt).getY(), (myTurn == true ? "black":"white"));
+				System.out.println("상대가 " + enemySelectedX+ ","+enemySelectedY+" 을 선택하였습니다.");
+				changeStone(enemySelectedX, enemySelectedY, (myTurn == true ? "black":"white"));
 				display();
 				currentCount++;
 				whiteOutCount = 0;
@@ -153,6 +161,20 @@ public class Main {
 		System.out.println("하얀 돌 : " + whiteStone);
 		System.out.println("승리 : " + (blackStone > whiteStone ? "player" : "상대편"));
 		
+	}
+
+	private static boolean isUserSelectedUnCorrectly(String[] userSelectedXandY) {
+		return userSelectedXandY.length != 2;
+	}
+
+	private static void displayChoosablePoints(List<Pos> possibleChoices) {
+		for(int i=0, size = possibleChoices.size(); i < size; i++){
+			System.out.printf("[" + possibleChoices.get(i).getX()+"," + possibleChoices.get(i).getY() + "] ");
+		}
+	}
+
+	private static boolean isChoosable(List<Pos> possibleChoices) {
+		return possibleChoices.size()>0;
 	}
 	
 	//선택한 돌의 좌표로 부터 4방향의 배열에 변경되야 할 돌을 찾아 바꾼다.
@@ -395,6 +417,14 @@ public class Main {
 					}
 				}
 			}
+		}
+	}
+	
+	private static void systemWaitForReality() {
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 	}
 }
