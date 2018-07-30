@@ -55,7 +55,7 @@ public class Main {
 		System.out.println(gameDisplayer.toString());
 	}
 
-	//이부분 리팩토링 두개를 하나로 바꾸고  0,2 를 선택했을때 위에 돌이 안바뀌는 오류가있음 public과 private의 구분이 심상치 않다
+	// 0,2 를 선택했을때 위에 돌이 안바뀌는 오류가있음 public과 private의 구분이 심상치 않다
 	public static void play(){
 		systemWaitForReality();
 		System.out.println("-----오델로 게임을 시작합니다.-----");
@@ -107,8 +107,7 @@ public class Main {
 				countOfBlackStone = countOfBlackStone+1;
 				System.out.println(userSelectedX+ ","+userSelectedY+" 을 선택하셨습니다.");
 				modifyStatus(Integer.parseInt(userSelectedX), Integer.parseInt(userSelectedY));
-				displayCurrentSituation();
-				currentCount++;
+				
 				blackOutCount = 0;
 			}else {
 				Random ran = new Random();
@@ -119,10 +118,11 @@ public class Main {
 				countOfWhiteStone = countOfWhiteStone+1;
 				System.out.println("상대가 " + enemySelectedX+ ","+enemySelectedY+" 을 선택하였습니다.");
 				modifyStatus(enemySelectedX, enemySelectedY);
-				displayCurrentSituation();
-				currentCount++;
+				
 				whiteOutCount = 0;
 			}
+			currentCount++;
+			displayCurrentSituation();
 		} else{
 			System.out.println("선택할 수 있는 돌이 없어 상대 턴으로 넘어갑니다.");
 			
