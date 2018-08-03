@@ -25,110 +25,90 @@ public class Main {
 	private static String myColor = "black";
 	private static String enemyColor = "white";
 	private static List<Pos> choices;
+	private static List<String> choicesList;
 	private static Stack<Pos> stack;
 	
 	public static void main(String[] args) {
 		init(plateSize);
-		displayCurrentSituation();
+		printGameStatus();
 		play();
 	}
 	
-	//게임 초기화
 	public static void init(int plateSize){
-		System.out.println();
-		System.out.println("******** Othello ********");
-		System.out.println("-----게임을 초기화 합니다.-----");
+		printInitMsg();
 		initStone(plateSize);
 	}
 	
-	//현재 게임상황 display
-	public static void displayCurrentSituation(){
-		System.out.println();
-		StringBuffer gameDisplayer = new StringBuffer();
-		for(int i=0; i<plateSize; i++){
-			gameDisplayer.append("　　　　");
-			for(int j=0; j<plateSize; j++){
-				showStoneStatusAndFindPointOfPossiblePoint(gameDisplayer, i, j);
-			}
-			gameDisplayer.append("\n");
-		}
-		System.out.println(gameDisplayer.toString());
-	}
+	
 
 	// 0,2 를 선택했을때 위에 돌이 안바뀌는 오류가있음 public과 private의 구분이 심상치 않다
 	public static void play(){
-		systemWaitForReality();
-		System.out.println("-----오델로 게임을 시작합니다.-----");
-		System.out.println();
+		printStartMsg();
 		
 		while(!isFinish()){
-			myTurn = !myTurn;//내 턴으로 시작(true)
-			myColor = (myTurn ? "black" : "white");
-			enemyColor = (myTurn ? "white" : "black");
-			if(myTurn){
-				System.out.println("---------나의턴---------");
-				System.out.printf("선택 가능 좌표 :  ");
-				
-			}else {
-				System.out.println("---------상대턴---------");
-			}
+			setTurnAndColor();
+			printWhoIsTurn();
 			
 			findChoices();
 			playTurn();
 		}
 		
-		System.out.println("----------게임 종료!!!----------");
-		System.out.println("현재카운트 : " + currentCount);
-		System.out.println("검은 돌 : " + countOfBlackStone);
-		System.out.println("하얀 돌 : " + countOfWhiteStone);
-		System.out.println("승리 : " + (countOfBlackStone > countOfWhiteStone ? "player" : "상대편"));
+		printFinishMsg();
 		
 	}
 
+	private static void setTurnAndColor() {
+		myTurn = !myTurn;//내 턴으로 시작(true)
+		myColor = (myTurn ? "black" : "white");
+		enemyColor = (myTurn ? "white" : "black");
+	}
+
 	private static void playTurn() {
-		if(isChoosable()){
-			displayChoosablePoints();
-			displayCurrentSituation();
+		if(hasChoices()){
+			printChoosablePoints();
+			printGameStatus();
 			
-			if(myTurn){
-				System.out.printf("돌을 놓을 좌표를 선택하세요. (입력형식:x,y) :");
-				String[] userSelectedXandY = scan.nextLine().split(",");
-				if(isUserSelectedUnCorrectly(userSelectedXandY)){ // 목록에 있는 좌표만 선택되도록 개선
-					System.out.println();
-					System.out.println("------입력 에러!!!------");
-					System.out.println("좌표를 정확히 입력해 주세요ex) 3,1");
-					System.out.println();
-					myTurn = !myTurn;//다시 내턴이 오기위해
-					return;
-				}
-				String userSelectedY = userSelectedXandY[1];
-				String userSelectedX = userSelectedXandY[0];
-				plate[Integer.parseInt(userSelectedY)][Integer.parseInt(userSelectedX)].setColor(myColor);
-				countOfBlackStone = countOfBlackStone+1;
-				System.out.println(userSelectedX+ ","+userSelectedY+" 을 선택하셨습니다.");
-				modifyStatus(Integer.parseInt(userSelectedX), Integer.parseInt(userSelectedY));
-				
-				blackOutCount = 0;
-			}else {
-				Random ran = new Random();
-				int randInt = ran.nextInt(choices.size()); 
-				int enemySelectedY = choices.get(randInt).getY();
-				int enemySelectedX = choices.get(randInt).getX();
-				plate[enemySelectedY][enemySelectedX].setColor(myColor);
-				countOfWhiteStone = countOfWhiteStone+1;
-				System.out.println("상대가 " + enemySelectedX+ ","+enemySelectedY+" 을 선택하였습니다.");
-				modifyStatus(enemySelectedX, enemySelectedY);
-				
-				whiteOutCount = 0;
-			}
-			currentCount++;
-			displayCurrentSituation();
+			choosePoint();
+			
+			printGameStatus();
 		} else{
 			System.out.println("선택할 수 있는 돌이 없어 상대 턴으로 넘어갑니다.");
 			
 			if(myTurn) blackOutCount++;
 			else whiteOutCount++;
 		}
+	}
+
+	private static void choosePoint() {
+		if(myTurn){
+			System.out.printf("돌을 놓을 좌표를 선택하세요. (입력형식:x,y) :");
+			String[] userSelectedXandY = scan.nextLine().split(",");
+			if(isUserSelectedUnCorrectly(userSelectedXandY)){//같은 곳에 다시 선택했을때 validation 추가필요
+				printInputErrorMsg();
+				myTurn = !myTurn;//다시 내턴이 오기위해
+				return;
+			}
+			int userSelectedY = Integer.parseInt(userSelectedXandY[1]);
+			int userSelectedX = Integer.parseInt(userSelectedXandY[0]);
+			plate[userSelectedY][userSelectedX].setColor(myColor);
+			countOfBlackStone = countOfBlackStone+1;
+			System.out.println(userSelectedX+ ","+userSelectedY+" 을 선택하셨습니다.");
+			modifyStatus(userSelectedX, userSelectedY);
+			
+			blackOutCount = 0;
+		}else {
+			Random ran = new Random();
+			int randomInt = ran.nextInt(choices.size()); 
+			int enemySelectedY = choices.get(randomInt).getY();
+			int enemySelectedX = choices.get(randomInt).getX();
+			plate[enemySelectedY][enemySelectedX].setColor(myColor);
+			countOfWhiteStone = countOfWhiteStone+1;
+			System.out.println("상대가 " + enemySelectedX+ ","+enemySelectedY+" 을 선택하였습니다.");
+			modifyStatus(enemySelectedX, enemySelectedY);
+			
+			whiteOutCount = 0;
+		}
+		currentCount++;
 	}
 	
 	//현재 영역에서 선택할 수 있는 선택지를 찾아 제공한다.
@@ -158,7 +138,7 @@ public class Main {
 		}
 	}
 	
-	//선택한 돌의 좌표로 부터 4방향의 배열에 변경되야 할 돌을 찾아 바꾼다.
+	//선택한 돌의 좌표로 부터 8방향의 배열에 변경되야 할 돌을 찾아 바꾼다.
 	private static void modifyStatus(int x, int y){
 
 		stack = new Stack<>();
@@ -224,7 +204,6 @@ public class Main {
 		}
 	}
 	
-	//상대 돌 뒤집기
 	private static void flipStone(){
 		while(!stack.isEmpty()){
 			stack.pop().setColor(myColor);
@@ -257,18 +236,6 @@ public class Main {
 		}
 	}
 
-	private static void showStoneStatusAndFindPointOfPossiblePoint(StringBuffer displayer, int i, int j) {
-		if(plate[i][j].getColor().equals("black")){
-			displayer.append("●  ");
-		}else if(plate[i][j].getColor().equals("white")){
-			displayer.append("○  ");
-		}else if(plate[i][j].getChoosable() == true){
-			displayer.append("¤  ");
-		}else {
-			displayer.append("□  ");
-		}
-	}
-	
 	//선택할 수 있는 지점을 표시해주는 함수.. 내용은 지저분하다
 	private static void searchDirectionForChoices() {
 		for(int i=0; i<plateSize; i++){
@@ -359,10 +326,71 @@ public class Main {
 		}
 	}
 	
-	private static void displayChoosablePoints() {
+	//현재 게임상황 display
+	public static void printGameStatus(){
+		System.out.println();
+		StringBuffer gameDisplayer = new StringBuffer();
+		for(int i=0; i<plateSize; i++){
+			gameDisplayer.append("　　　　");
+			for(int j=0; j<plateSize; j++){
+				if(plate[i][j].getColor().equals("black")){
+					gameDisplayer.append("●  ");
+				}else if(plate[i][j].getColor().equals("white")){
+					gameDisplayer.append("○  ");
+				}else if(plate[i][j].getChoosable() == true){
+					gameDisplayer.append("¤  ");
+				}else {
+					gameDisplayer.append("□  ");
+				}
+			}
+			gameDisplayer.append("\n");
+		}
+		System.out.println(gameDisplayer.toString());
+	}
+	
+	private static void printWhoIsTurn() {
+		if(myTurn){
+			System.out.println("---------나의턴---------");
+			System.out.printf("선택 가능 좌표 :  ");
+			
+		}else {
+			System.out.println("---------상대턴---------");
+		}
+	}
+	
+	private static void printInputErrorMsg() {
+		System.out.println();
+		System.out.println("------입력 에러!!!------");
+		System.out.println("선택 가능 목록의 좌표를 정확히 입력해 주세요. ex) 3,1");
+		System.out.println();
+	}
+	
+	private static void printChoosablePoints() {
+		choicesList = new ArrayList<>();
 		for(int i=0, size = choices.size(); i < size; i++){
 			System.out.printf("[" + choices.get(i).getX()+"," + choices.get(i).getY() + "] ");
+			choicesList.add(choices.get(i).getX()+","+choices.get(i).getY());
 		}
+	}
+	
+	private static void printInitMsg() {
+		System.out.println();
+		System.out.println("******** Othello ********");
+		System.out.println("-----게임을 초기화 합니다.-----");
+	}
+	
+	private static void printStartMsg() {
+		systemWaitForReality();
+		System.out.println("-----오델로 게임을 시작합니다.-----");
+		System.out.println();
+	}
+
+	private static void printFinishMsg() {
+		System.out.println("----------게임 종료!!!----------");
+		System.out.println("현재카운트 : " + currentCount);
+		System.out.println("검은 돌 : " + countOfBlackStone);
+		System.out.println("하얀 돌 : " + countOfWhiteStone);
+		System.out.println("승리 : " + (countOfBlackStone > countOfWhiteStone ? "player" : "상대편"));
 	}
 	
 	//if문 조건 추출을 위해 만든 private 메소드들.. 볼것 없는 부분
@@ -390,13 +418,23 @@ public class Main {
 	}
 	
 	private static boolean isUserSelectedUnCorrectly(String[] userSelectedXandY) {
+		boolean isValid = false;
+		for(String choice : choicesList){
+			if(userSelectedXandY.length > 1 && choice.equals(userSelectedXandY[0]+","+userSelectedXandY[1])){
+				isValid = true;
+				break;
+			}else{
+				return true;
+			}
+		}
+		
 		return (userSelectedXandY.length != 2) || !Character.isDigit(userSelectedXandY[0].charAt(0))
 				|| !Character.isDigit(userSelectedXandY[1].charAt(0)) || Integer.parseInt(userSelectedXandY[0]) > 5 
 				|| Integer.parseInt(userSelectedXandY[0]) < 0 || Integer.parseInt(userSelectedXandY[1]) > 5
-				|| Integer.parseInt(userSelectedXandY[1]) < 0;
+				|| Integer.parseInt(userSelectedXandY[1]) < 0 || !isValid;
 	}
 
-	private static boolean isChoosable() {
+	private static boolean hasChoices() {
 		return choices.size()>0;
 	}
 	
@@ -471,4 +509,6 @@ public class Main {
 			e.printStackTrace();
 		}
 	}
+	
+	
 }
