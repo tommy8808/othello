@@ -16,6 +16,7 @@ public class Main {
 	
 	private static final Scanner scan = new Scanner(System.in);
 	private static int plateSize = 6; //판의 길이. 짝수로만 가능
+	private static MessageService msgService;
 	private static Pos[][] plate = new Pos[plateSize][plateSize];
 	private static int totalCount = plateSize*plateSize;
 	private static int currentCount = 0;
@@ -30,30 +31,30 @@ public class Main {
 	
 	public static void main(String[] args) {
 		init(plateSize);
-		printGameStatus();
+		msgService.printGameStatus(plate);
 		play();
 	}
 	
 	public static void init(int plateSize){
-		printInitMsg();
+		msgService = new MessageService(plateSize);
+		msgService.printInitMsg();
+		
 		initStone(plateSize);
 	}
-	
-	
 
 	// 0,2 를 선택했을때 위에 돌이 안바뀌는 오류가있음 public과 private의 구분이 심상치 않다
 	public static void play(){
-		printStartMsg();
+		msgService.printStartMsg();
 		
 		while(!isFinish()){
 			setTurnAndColor();
-			printWhoIsTurn();
+			msgService.printWhoIsTurn(myTurn);
 			
 			findChoices();
 			playTurn();
 		}
 		
-		printFinishMsg();
+		msgService.printFinishMsg(currentCount, countOfBlackStone, countOfWhiteStone);
 		
 	}
 
@@ -65,12 +66,13 @@ public class Main {
 
 	private static void playTurn() {
 		if(hasChoices()){
-			printChoosablePoints();
-			printGameStatus();
+			msgService.printChoosablePoints(choices);
+			addChoosablePoints();
+			msgService.printGameStatus(plate);
 			
 			choosePoint();
 			
-			printGameStatus();
+			msgService.printGameStatus(plate);
 		} else{
 			System.out.println("선택할 수 있는 돌이 없어 상대 턴으로 넘어갑니다.");
 			
@@ -84,7 +86,7 @@ public class Main {
 			System.out.printf("돌을 놓을 좌표를 선택하세요. (입력형식:x,y) :");
 			String[] userSelectedXandY = scan.nextLine().split(",");
 			if(isUserSelectedUnCorrectly(userSelectedXandY)){//같은 곳에 다시 선택했을때 validation 추가필요
-				printInputErrorMsg();
+				msgService.printInputErrorMsg();
 				myTurn = !myTurn;//다시 내턴이 오기위해
 				return;
 			}
@@ -326,71 +328,11 @@ public class Main {
 		}
 	}
 	
-	//현재 게임상황 display
-	public static void printGameStatus(){
-		System.out.println();
-		StringBuffer gameDisplayer = new StringBuffer();
-		for(int i=0; i<plateSize; i++){
-			gameDisplayer.append("　　　　");
-			for(int j=0; j<plateSize; j++){
-				if(plate[i][j].getColor().equals("black")){
-					gameDisplayer.append("●  ");
-				}else if(plate[i][j].getColor().equals("white")){
-					gameDisplayer.append("○  ");
-				}else if(plate[i][j].getChoosable() == true){
-					gameDisplayer.append("¤  ");
-				}else {
-					gameDisplayer.append("□  ");
-				}
-			}
-			gameDisplayer.append("\n");
-		}
-		System.out.println(gameDisplayer.toString());
-	}
-	
-	private static void printWhoIsTurn() {
-		if(myTurn){
-			System.out.println("---------나의턴---------");
-			System.out.printf("선택 가능 좌표 :  ");
-			
-		}else {
-			System.out.println("---------상대턴---------");
-		}
-	}
-	
-	private static void printInputErrorMsg() {
-		System.out.println();
-		System.out.println("------입력 에러!!!------");
-		System.out.println("선택 가능 목록의 좌표를 정확히 입력해 주세요. ex) 3,1");
-		System.out.println();
-	}
-	
-	private static void printChoosablePoints() {
+	private static void addChoosablePoints() {
 		choicesList = new ArrayList<>();
 		for(int i=0, size = choices.size(); i < size; i++){
-			System.out.printf("[" + choices.get(i).getX()+"," + choices.get(i).getY() + "] ");
 			choicesList.add(choices.get(i).getX()+","+choices.get(i).getY());
 		}
-	}
-	
-	private static void printInitMsg() {
-		System.out.println();
-		System.out.println("******** Othello ********");
-		System.out.println("-----게임을 초기화 합니다.-----");
-	}
-	
-	private static void printStartMsg() {
-		systemWaitForReality();
-		System.out.println("-----오델로 게임을 시작합니다.-----");
-		System.out.println();
-	}
-
-	private static void printFinishMsg() {
-		System.out.println("----------게임 종료!!!----------");
-		System.out.println("현재카운트 : " + currentCount);
-		System.out.println("검은 돌 : " + countOfBlackStone);
-		System.out.println("하얀 돌 : " + countOfWhiteStone);
-		System.out.println("승리 : " + (countOfBlackStone > countOfWhiteStone ? "player" : "상대편"));
 	}
 	
 	//if문 조건 추출을 위해 만든 private 메소드들.. 볼것 없는 부분
@@ -423,8 +365,6 @@ public class Main {
 			if(userSelectedXandY.length > 1 && choice.equals(userSelectedXandY[0]+","+userSelectedXandY[1])){
 				isValid = true;
 				break;
-			}else{
-				return true;
 			}
 		}
 		

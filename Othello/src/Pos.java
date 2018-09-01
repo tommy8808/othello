@@ -5,7 +5,6 @@ public class Pos {
 	private int x, y, maxSize;
 	private boolean choosable;
 	
-	
 	public Pos(String color, int x, int y, int maxSize) {
 		this.color = color;
 		this.x = x;
